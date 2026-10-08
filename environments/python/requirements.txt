@@ -1,4 +1,8 @@
 fastapi
 uvicorn[standard]
+pydantic
+sqlalchemy
+alembic
+psycopg[binary]
 pytest
 httpx
