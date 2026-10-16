@@ -1,17 +1,17 @@
 # TASKS.md
 
 PHASE: 0
-STATUS: ready
+STATUS: done
 
 (0=Bootstrap | 1=Specify | 2=Design | 3=Develop | 4=Validate | 5=Deploy)
 
 ## Current Use Case
 
-docs/specs/UC-[XXX]-[NAME].md
+None — select and specify the first use case in Phase 1.
 
 ## Backlog
 
-- docs/specs/UC-[XXX]-[NAME].md
+- Select the initial use case during Phase 1.
 
 ## Working agreement
 
