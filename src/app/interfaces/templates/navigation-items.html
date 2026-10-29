@@ -1,0 +1,47 @@
+<a
+  class="nav-link{% if section == 'overview' %} is-active{% endif %}"
+  href="/"
+  {% if section == 'overview' %}aria-current="page"{% endif %}
+>
+  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+    <rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
+    <rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
+    <rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
+    <rect x="13.5" y="13.5" width="7" height="7" rx="2"></rect>
+  </svg>
+  <span class="nav-label">Overview</span>
+</a>
+<a
+  class="nav-link{% if section == 'companies' %} is-active{% endif %}"
+  href="/companies"
+  {% if section == 'companies' %}aria-current="page"{% endif %}
+>
+  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+    <path d="M4 20V7.5L12 4l8 3.5V20"></path>
+    <path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"></path>
+  </svg>
+  <span class="nav-label">Companies</span>
+</a>
+<a
+  class="nav-link{% if section == 'availability' %} is-active{% endif %}"
+  href="/availability"
+  {% if section == 'availability' %}aria-current="page"{% endif %}
+>
+  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="8.5"></circle>
+    <path d="M12 7v5l3.5 2"></path>
+  </svg>
+  <span class="nav-label">Availability</span>
+</a>
+<a
+  class="nav-link{% if section == 'schedule' %} is-active{% endif %}"
+  href="/schedule"
+  {% if section == 'schedule' %}aria-current="page"{% endif %}
+>
+  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+    <rect x="3.5" y="5.5" width="17" height="15" rx="2.5"></rect>
+    <path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17"></path>
+    <path d="M8 14h2M14 14h2M8 17h2"></path>
+  </svg>
+  <span class="nav-label">Schedule</span>
+</a>

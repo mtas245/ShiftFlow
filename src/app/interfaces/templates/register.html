@@ -1,0 +1,23 @@
+{% extends "auth-page.html" %}
+
+{% block title %}Create your account{% endblock %}
+{% block breadcrumb %}Create account{% endblock %}
+{% block auth_title %}Create your account{% endblock %}
+{% block auth_description %}Use your email and a strong password to get started. We’ll send a one-time verification code if registration is available.{% endblock %}
+{% block auth_content %}
+<form class="auth-form" method="post" action="/auth/register" data-auth-form="register">
+  <div class="form-field">
+    <label for="register-email">Email address</label>
+    <input id="register-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+  </div>
+  <div class="form-field">
+    <label for="register-password">Password</label>
+    <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="1024" aria-describedby="register-password-hint" required>
+    <p class="form-hint" id="register-password-hint">Use at least 12 characters.</p>
+  </div>
+  <div class="form-feedback" data-form-message role="status" aria-live="polite" hidden></div>
+  <button class="button button-primary auth-submit" type="submit">Create account</button>
+</form>
+<p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+<p class="auth-switch">Already received a code? <a href="/verify-email">Verify your email</a></p>
+{% endblock %}

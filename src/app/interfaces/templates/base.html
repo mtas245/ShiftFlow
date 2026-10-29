@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#f5f7fa">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block title %}ShiftFlow{% endblock %} · ShiftFlow</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <script src="/static/js/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div
+      class="app-shell"
+      data-shiftflow-app
+      data-authenticated="{{ 'true' if authenticated else 'false' }}"
+      data-page="{{ section }}"
+    >
+      <aside class="sidebar" aria-label="Application sidebar">
+        <a class="brand" href="/" aria-label="ShiftFlow home">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span class="brand-name">ShiftFlow</span>
+        </a>
+        <div class="workspace-label">WORKSPACE</div>
+        {% include "navigation.html" %}
+        <div class="sidebar-footer">
+          <span class="status-dot{% if not authenticated %} is-inactive{% endif %}" aria-hidden="true"></span>
+          <span>{{ "Signed in" if authenticated else "Sign in required" }}</span>
+        </div>
+      </aside>
+
+      <div class="main-column">
+        <header class="topbar">
+          <div class="topbar-context">
+            <span class="eyebrow">SHIFT PLANNING</span>
+            <span class="topbar-divider" aria-hidden="true">/</span>
+            <span class="topbar-page">{% block breadcrumb %}Overview{% endblock %}</span>
+          </div>
+          <div class="topbar-actions">
+            {% if authenticated %}
+            <div class="company-switcher" data-company-switcher>
+              <label for="company-switcher-select">Company</label>
+              <select id="company-switcher-select" data-company-select aria-label="Switch company">
+                <option value="">Loading companies…</option>
+              </select>
+              <button class="button button-secondary button-compact" type="button" data-company-load-more hidden>Load more</button>
+            </div>
+            <span class="session-status" aria-label="Session status">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span>Signed in</span>
+            </span>
+            <form method="post" action="/auth/logout" data-auth-logout>
+              <button class="button button-secondary button-compact" type="submit">Sign out</button>
+            </form>
+            {% else %}
+            <a class="account-link" href="/login">Sign in</a>
+            <a class="button button-primary button-compact" href="/register">Create account</a>
+            {% endif %}
+          </div>
+        </header>
+
+        <main id="main-content" tabindex="-1">
+          {% block content %}{% endblock %}
+          <p class="sr-only" data-company-status role="status" aria-live="polite"></p>
+          <p class="sr-only" id="session-message" role="status" aria-live="polite"></p>
+        </main>
+        <footer class="page-footer">
+          <span>ShiftFlow</span>
+          <span>Plan work with clarity.</span>
+        </footer>
+      </div>
+
+      <nav class="mobile-navigation" aria-label="Primary navigation">
+        {% include "navigation-items.html" %}
+      </nav>
+    </div>
+  </body>
+</html>

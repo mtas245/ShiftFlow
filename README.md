@@ -1,59 +1,108 @@
-# AI-SDLC Project Template
+# ShiftFlow
 
-[![AI-SDLC](https://img.shields.io/badge/AI--SDLC-v1.0.0-blue)](https://ai-sdlc.aisl.science)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22833065.svg)](https://doi.org/10.5281/zenodo.22833065)
-[![arXiv](https://img.shields.io/badge/arXiv-2609.24348-b31b1b.svg)](https://doi.org/10.48550/arXiv.2609.24348)
+ShiftFlow is an FHNW university project for hospitality employee availability
+and shift scheduling. It uses a FastAPI-served browser UI, PostgreSQL, and a
+Clean Architecture backend. Read [PROJECT.md](docs/PROJECT.md) for architecture,
+security decisions, and the complete project context; [TASKS.md](docs/TASKS.md)
+records lifecycle status and validation evidence.
 
-Starter repository for student and teaching projects that use the AI-Assisted
-Software Development Life Cycle (AI-SDLC).
+## Local Docker development
 
-The method is documented canonically in [AISL Docs](https://docs.aisl.science/learning-and-resources/ai-sdlc). This repository contains only the executable, repository-local
-workflow artefacts. It does not contain a complete copy of the method or
-application-specific code.
+Requirements: Docker Desktop with Docker Compose. This setup uses a local
+PostgreSQL 16 database, development-only credentials, and a self-signed HTTPS
+certificate for `localhost`. The certificate is untrusted by browsers and is
+for local development only.
 
-## Create a project
+```powershell
+Copy-Item .env.example .env
+docker compose build app
+docker compose up -d db dev-tls
+docker compose run --rm app python -m alembic upgrade head
+docker compose up -d app
+```
 
-1. Select **Use this template** on GitHub and create a new repository.
-2. Open the new repository in GitHub Codespaces and run the agent setup below.
-3. Complete `docs/PROJECT.md` with the project context, architecture and commands.
-4. Start the lifecycle with `AGENTS.md` and record progress in `docs/TASKS.md`.
-5. Use `docs/specs/UC-TEMPLATE.md` for the first use-case specification.
+Open <https://localhost:8443>. Accept the browser's self-signed-certificate
+warning for this local instance only. Check readiness at
+<https://localhost:8443/health>. `docker compose down` stops the services but
+preserves the development database volume. Do not use the example credentials
+or local TLS certificate outside this isolated environment. Email delivery is
+unconfigured by default, so account lifecycle routes that require email
+delivery fail closed; this setup does not bypass verification.
 
-GitHub Copilot instructions are provided in `.github/copilot-instructions.md`.
-The included GitHub Actions workflows check the required AI-SDLC structure and
-provide a technology-neutral source release baseline. Add project-specific
-build, test and artifact-publishing steps during VALIDATE.
-`.github/workflows/cd.yml` is included as an inactive template and must be
-configured during DEPLOY, after the deployment platform, required secrets and
-post-deploy checks have been decided.
+`DATABASE_URL` and `PUBLIC_ORIGIN` are required for application startup.
+`RATE_LIMIT_HMAC_SECRET` enables shared rate limiting. To enable account email
+delivery, set both `POSTMARK_SERVER_TOKEN` and `EMAIL_FROM_ADDRESS` to
+appropriate local/test values; never commit them. Production operation,
+public access, and deployment are not authorized by this development setup.
+ADR-006 remains proposed.
 
-## Agent setup
+## Python and PostgreSQL tests
 
-Codespaces creates a Python development container with Python, Pylance,
-debugging and GitHub Copilot extensions. It also prepares `.agents/skills` and
-the Python environment automatically. The default terminal locale is English;
-the VS Code UI uses its own user display-language setting.
+Python 3.12.10 and PostgreSQL 16 are used by CI. Install the pinned test
+dependencies with:
 
-Run `bash scripts/setup-skills.sh` from the repository root when another agent
-is used. Run `bash scripts/setup-python.sh` again when the Python environment
-needs to be recreated or refreshed.
-Choose `copilot`, `codex`, `claude`, `cline`, `opencode`, `cursor`, `kiro`,
-`junie`, `devin` or `all`. The script links to the canonical `skills/` directory and
-falls back to copying if links are unavailable. Existing destinations are kept;
-copies must be refreshed manually after skill changes. Verify discovery in your
-agent; setup does not install or configure the agent itself.
+```powershell
+python -m pip install -r environments/python/requirements-ci.lock
+```
 
-For non-interactive setup, pass the same selection, for example `bash scripts/setup-skills.sh copilot`. The `claude` and `all` selections also create a missing `CLAUDE.md` containing `@AGENTS.md`; an existing file is preserved. Shared instructions and skills are not modified.
+The PostgreSQL suite destructively resets its target. It refuses to run unless
+`SHIFTFLOW_TEST_DATABASE_URL` identifies the dedicated loopback database
+`shiftflow_test` authenticated as `shiftflow_test_user`. Never point this
+variable at development or production data. Start a disposable test-only
+PostgreSQL container (if port 5432 is occupied, choose another local port and
+update the URL below):
 
-## Repository artefacts
+```powershell
+docker run --name shiftflow-test-db --rm -d `
+  -e POSTGRES_DB=shiftflow_test `
+  -e POSTGRES_USER=shiftflow_test_user `
+  -e POSTGRES_PASSWORD=shiftflow_test_only_password `
+  -p 127.0.0.1:5432:5432 `
+  --health-cmd "pg_isready -U shiftflow_test_user -d shiftflow_test" `
+  --health-interval 2s --health-timeout 3s --health-retries 30 `
+  postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+$attempt = 0
+do {
+  Start-Sleep -Seconds 2
+  $status = docker inspect --format '{{.State.Health.Status}}' shiftflow-test-db
+  $attempt++
+} while ($status -ne "healthy" -and $attempt -lt 30)
+if ($status -ne "healthy") { throw "Disposable PostgreSQL test service did not become healthy" }
+$env:SHIFTFLOW_TEST_DATABASE_URL = "postgresql+psycopg://shiftflow_test_user:shiftflow_test_only_password@127.0.0.1:5432/shiftflow_test"
+$env:DATABASE_URL = $env:SHIFTFLOW_TEST_DATABASE_URL
+$env:PUBLIC_ORIGIN = "https://localhost"
+python -m pytest -m "not e2e" tests\unit tests\integration -q
+```
 
-- `AGENTS.md` — lifecycle router and guardrails
-- `docs/PROJECT.md` — project context and commands
-- `docs/TASKS.md` — current lifecycle state
-- `docs/specs/` — executable use-case specifications
-- `skills/ai-sdlc-*` — phase-specific execution guidance
-- `.devcontainer/` — Codespaces and VS Code baseline
-- `environments/python/` — Python environment profile, including the source
-  VS Code debug configuration
-- `scripts/setup-python.sh` — Python environment and dependency setup
-- `.github/` — Copilot instructions, CI, release and CD workflow templates
+Install the optional E2E dependencies and browser, then run the separately
+identified real-app Playwright test:
+
+```powershell
+python -m pip install -r environments/python/requirements-e2e.txt
+python -m playwright install chromium
+python -m pytest -m e2e tests\integration\test_company_onboarding_e2e.py -q
+docker stop shiftflow-test-db
+```
+
+The GitHub Actions unit/integration and E2E jobs each provide their own
+disposable PostgreSQL 16 service and synthetic-only credentials. A separate
+container-smoke job builds the image, applies migrations explicitly, and
+checks HTTPS readiness. See `.github/workflows/ci.yml`.
+
+## Latest local verification
+
+On Python 3.12.10, the full non-E2E suite passed **350 tests** against
+disposable PostgreSQL 16; the separate real-app Playwright E2E passed **1
+test** against a fresh disposable PostgreSQL 16 database. The Docker image was
+built and started as UID/GID `10001:10001`, migrations reached
+`c8a4f0e2b761`, and HTTPS `/health` returned `{"status":"ok"}`. GitHub-hosted
+Actions have not yet run; the CI workflow is configured and awaits a hosted
+run.
+
+## Project resources
+
+- [AI-SDLC router and shared project rules](AGENTS.md)
+- [Project architecture, API contracts, and security boundary](docs/PROJECT.md)
+- [Lifecycle state, backlog, and test evidence](docs/TASKS.md)
+- [Approved/proposed architecture decisions](docs/adr/)
+- [Use-case specifications](docs/specs/)

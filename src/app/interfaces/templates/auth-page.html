@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-content auth-page" aria-labelledby="page-title">
+  <div class="auth-card surface-card">
+    <a class="auth-brand" href="/" aria-label="ShiftFlow home">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </span>
+      <span>ShiftFlow</span>
+    </a>
+    <p class="eyebrow">{% block auth_eyebrow %}ACCOUNT ACCESS{% endblock %}</p>
+    <h1 id="page-title">{% block auth_title %}{% endblock %}</h1>
+    <p class="auth-description">{% block auth_description %}{% endblock %}</p>
+    {% block auth_content %}{% endblock %}
+  </div>
+</section>
+{% endblock %}

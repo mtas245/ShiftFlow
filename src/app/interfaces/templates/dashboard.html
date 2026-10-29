@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Overview{% endblock %}
+{% block breadcrumb %}Overview{% endblock %}
+{% block content %}
+<section class="page-content" aria-labelledby="page-title">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">YOUR WORKSPACE</p>
+      <h1 id="page-title">A clearer view of work.</h1>
+      <p class="page-description">A thoughtful place to bring people and schedules together.</p>
+    </div>
+    <span class="preview-badge">Preview</span>
+  </div>
+
+  <div class="hero-card">
+    <div class="hero-copy">
+      <span class="hero-kicker">SHIFT PLANNING, MADE CALMER</span>
+      <h2>Make room for a better rhythm.</h2>
+      <p>ShiftFlow is being prepared to help teams plan work with confidence and care.</p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <span class="art-orbit orbit-one"></span>
+      <span class="art-orbit orbit-two"></span>
+      <span class="art-core"></span>
+    </div>
+  </div>
+
+  {% if authenticated %}
+  <section class="company-context-card" aria-labelledby="company-context-title">
+    <div>
+      <p class="eyebrow">CURRENT COMPANY</p>
+      <h2 id="company-context-title" data-dashboard-company-name>Loading companies…</h2>
+      <p class="company-context-description" data-dashboard-company-description>
+        Company selection helps organize your workspace. Access is always checked by ShiftFlow.
+      </p>
+    </div>
+    <div class="company-context-empty" data-dashboard-company-empty hidden>
+      <p>You are not part of a company yet.</p>
+      <a class="button button-primary" href="/companies">Create or join a company</a>
+    </div>
+    <a class="button button-secondary" href="/companies">Manage companies</a>
+  </section>
+  {% else %}
+  <section class="company-context-card" aria-labelledby="company-context-title">
+    <div>
+      <p class="eyebrow">COMPANY WORKSPACE</p>
+      <h2 id="company-context-title">Sign in to discover your companies</h2>
+      <p class="company-context-description">Company data is only available to authenticated members.</p>
+    </div>
+    <a class="button button-primary" href="/login">Sign in</a>
+  </section>
+  {% endif %}
+
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">AT A GLANCE</p>
+      <h2>Coming soon</h2>
+    </div>
+    <span class="section-caption">Layout preview only</span>
+  </div>
+  <div class="card-grid">
+    <article class="surface-card metric-card">
+      <span class="card-icon icon-blue" aria-hidden="true">01</span>
+      <h3>Team schedule</h3>
+      <p>Schedule summaries will appear here once connected.</p>
+      <span class="placeholder-label">Placeholder</span>
+    </article>
+    <article class="surface-card metric-card">
+      <span class="card-icon icon-lilac" aria-hidden="true">02</span>
+      <h3>Availability</h3>
+      <p>Availability insights will be available in a future step.</p>
+      <span class="placeholder-label">Placeholder</span>
+    </article>
+    <article class="surface-card metric-card">
+      <span class="card-icon icon-mint" aria-hidden="true">03</span>
+      <h3>Team updates</h3>
+      <p>Useful planning updates will have a home here.</p>
+      <span class="placeholder-label">Placeholder</span>
+    </article>
+  </div>
+  <p class="notice" role="note">
+    <span class="notice-mark" aria-hidden="true">i</span>
+    This dashboard is a visual placeholder. No schedule or employee data is loaded.
+  </p>
+</section>
+{% endblock %}

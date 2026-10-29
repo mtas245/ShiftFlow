@@ -1,0 +1,24 @@
+{% extends "auth-page.html" %}
+
+{% block title %}Sign in{% endblock %}
+{% block breadcrumb %}Sign in{% endblock %}
+{% block auth_title %}Welcome back{% endblock %}
+{% block auth_description %}Sign in to continue to your ShiftFlow workspace.{% endblock %}
+{% block auth_content %}
+<form class="auth-form" method="post" action="/auth/login" data-auth-form="login">
+  <div class="form-field">
+    <label for="login-email">Email address</label>
+    <input id="login-email" name="email" type="email" autocomplete="username" inputmode="email" maxlength="254" required>
+  </div>
+  <div class="form-field">
+    <label for="login-password">Password</label>
+    <input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
+  </div>
+  <div class="form-feedback" data-form-message role="status" aria-live="polite" hidden></div>
+  <button class="button button-primary auth-submit" type="submit">Sign in</button>
+</form>
+<div class="auth-secondary-links">
+  <a href="/forgot-password">Forgot password?</a>
+  <span>New to ShiftFlow? <a href="/register">Create account</a></span>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Copy .env.example to .env first}
+      POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env first}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env first}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - shiftflow_dev_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  dev-tls:
+    image: alpine:3.22@sha256:2e0b81d60597f449baa56dc25d355367869d2dca4cd57e866f1e2b52af3eb55f
+    command:
+      - sh
+      - -c
+      - "if [ ! -s /tls/localhost.crt ] || [ ! -s /tls/localhost.key ]; then apk add --no-cache openssl >/dev/null; openssl req -x509 -newkey rsa:2048 -nodes -days 30 -keyout /tls/localhost.key -out /tls/localhost.crt -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'; chmod 644 /tls/localhost.crt /tls/localhost.key; fi"
+    volumes:
+      - ./.local/tls:/tls
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Copy .env.example to .env first}
+      RATE_LIMIT_HMAC_SECRET: ${RATE_LIMIT_HMAC_SECRET:?Copy .env.example to .env first}
+      POSTMARK_SERVER_TOKEN: ${POSTMARK_SERVER_TOKEN:-}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-}
+      TRUSTED_PROXY_CIDRS: ""
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app.main:app
+      - --app-dir
+      - src
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --ssl-certfile
+      - /tls/localhost.crt
+      - --ssl-keyfile
+      - /tls/localhost.key
+    ports:
+      - "127.0.0.1:8443:8000"
+    volumes:
+      - ./.local/tls:/tls:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      dev-tls:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import ssl, urllib.request; urllib.request.urlopen('https://127.0.0.1:8000/health', context=ssl._create_unverified_context(), timeout=2).read()"
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  shiftflow_dev_postgres:

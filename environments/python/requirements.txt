@@ -1,7 +1,9 @@
 fastapi
+Jinja2
 uvicorn[standard]
 pydantic
 sqlalchemy
+argon2-cffi
 alembic
 psycopg[binary]
 pytest
