@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Your companies{% endblock %}
+{% block breadcrumb %}Companies{% endblock %}
+{% block content %}
+<section class="page-content" aria-labelledby="page-title">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">YOUR WORKSPACE</p>
+      <h1 id="page-title">Your companies</h1>
+      <p class="page-description">Create a company or join a team with its joining code. Each company membership can use its own display name.</p>
+    </div>
+  </div>
+
+  <section class="company-list-section" aria-labelledby="company-list-title">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">MEMBERSHIPS</p>
+        <h2 id="company-list-title">Company access</h2>
+      </div>
+    </div>
+    <p class="form-feedback" data-company-list-status role="status" aria-live="polite">Loading your companies…</p>
+    <div class="company-card-list" data-company-list></div>
+    <div class="company-list-empty" data-company-list-empty hidden>
+      <h3>No companies yet</h3>
+      <p>Create a company or join one using a code from its administrator.</p>
+    </div>
+  </section>
+
+  <div class="company-form-grid">
+    <section class="surface-card company-form-card" aria-labelledby="create-company-title">
+      <p class="eyebrow">ADMINISTRATOR</p>
+      <h2 id="create-company-title">Create a company</h2>
+      <p class="company-form-description">You will become its administrator. The generated joining code is shown once after creation.</p>
+      <form class="company-form" method="post" action="/companies" data-company-form="register-company">
+        <div class="form-field">
+          <label for="company-name">Company name</label>
+          <input id="company-name" name="company_name" type="text" autocomplete="organization" required>
+        </div>
+        <div class="form-field">
+          <label for="company-business-email">Business email</label>
+          <input id="company-business-email" name="business_email" type="email" autocomplete="email" required>
+        </div>
+        <div class="form-field">
+          <label for="company-business-phone">Business phone</label>
+          <input id="company-business-phone" name="business_phone" type="tel" inputmode="tel" pattern="\+[1-9][0-9]{1,14}" autocomplete="tel" aria-describedby="company-phone-hint" required>
+          <p class="form-hint" id="company-phone-hint">Use international E.164 format, for example +41791234567.</p>
+        </div>
+        <div class="form-field">
+          <label for="company-business-address">Business address</label>
+          <textarea id="company-business-address" name="business_address" autocomplete="street-address" required></textarea>
+        </div>
+        <div class="form-field">
+          <label for="company-industry">Industry</label>
+          <input id="company-industry" name="industry" type="text" required>
+        </div>
+        <div class="form-field">
+          <label for="administrator-display-name">Your display name in this company</label>
+          <input id="administrator-display-name" name="display_name" type="text" minlength="1" maxlength="80" autocomplete="nickname" required>
+          <p class="form-hint">This name is visible to members of this company.</p>
+        </div>
+        <div class="form-feedback" data-form-message role="status" aria-live="polite" hidden></div>
+        <button class="button button-primary auth-submit" type="submit">Create company</button>
+      </form>
+      <section class="joining-code-panel" data-joining-code-panel hidden aria-labelledby="joining-code-title">
+        <h3 id="joining-code-title">Company joining code</h3>
+        <p>Share this code only with people you intend to invite. It is cleared when you leave this page.</p>
+        <output class="joining-code" data-joining-code aria-label="Company joining code"></output>
+        <div class="joining-code-actions">
+          <button class="button button-secondary" type="button" data-copy-joining-code>Copy code</button>
+          <button class="button button-secondary" type="button" data-hide-joining-code>Hide code</button>
+        </div>
+        <p class="form-hint" data-joining-code-status role="status" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <section class="surface-card company-form-card" aria-labelledby="join-company-title">
+      <p class="eyebrow">EMPLOYEE</p>
+      <h2 id="join-company-title">Join a company</h2>
+      <p class="company-form-description">Enter the exact eight-character joining code shared by the company's administrator.</p>
+      <form class="company-form" method="post" action="/companies/join" data-company-form="join-company">
+        <div class="form-field">
+          <label for="joining-code-input">Joining code</label>
+          <input id="joining-code-input" name="joining_code" type="text" inputmode="text" autocapitalize="off" spellcheck="false" minlength="8" maxlength="8" pattern="[A-Z0-9]{8}" aria-describedby="joining-code-hint" required>
+          <p class="form-hint" id="joining-code-hint">Use eight uppercase letters or numbers exactly as provided.</p>
+        </div>
+        <div class="form-field">
+          <label for="employee-display-name">Your display name in this company</label>
+          <input id="employee-display-name" name="display_name" type="text" minlength="1" maxlength="80" autocomplete="nickname" required>
+          <p class="form-hint">This name is visible to members of this company.</p>
+        </div>
+        <div class="form-feedback" data-form-message role="status" aria-live="polite" hidden></div>
+        <button class="button button-primary auth-submit" type="submit">Join company</button>
+      </form>
+    </section>
+  </div>
+</section>
+{% endblock %}

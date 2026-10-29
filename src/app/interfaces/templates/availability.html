@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Availability{% endblock %}
+{% block breadcrumb %}Availability{% endblock %}
+{% block content %}
+<section class="page-content availability-page" aria-labelledby="page-title">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">YOUR TIME</p>
+      <h1 id="page-title">Your availability</h1>
+      <p class="page-description">Share the date-specific times you can work. Availability is a planning signal, not a confirmed shift.</p>
+    </div>
+  </div>
+
+  {% if authenticated %}
+  <section class="availability-workspace" aria-labelledby="availability-week-title">
+    <div class="availability-week-toolbar">
+      <div>
+        <p class="eyebrow">WEEK VIEW</p>
+        <h2 id="availability-week-title" data-availability-week-label aria-live="polite">Loading week…</h2>
+        <p class="availability-time-zone">Times shown in <strong data-local-time-zone>your local time zone</strong>. Intervals use your local time zone, may cross midnight, and do not repeat.</p>
+      </div>
+      <div class="availability-week-actions" aria-label="Availability week controls">
+        <button class="button button-secondary button-compact" type="button" data-availability-previous aria-label="Previous week">Previous</button>
+        <button class="button button-secondary button-compact" type="button" data-availability-today>Today</button>
+        <button class="button button-secondary button-compact" type="button" data-availability-next aria-label="Next week">Next</button>
+      </div>
+    </div>
+
+    <p class="availability-feedback" data-availability-status role="status" aria-live="polite">Choose a company to load your availability.</p>
+
+    <div class="availability-empty" data-availability-access hidden>
+      <h3>Employee availability</h3>
+      <p>Availability entry is available to employee members of the selected company.</p>
+    </div>
+    <div class="availability-empty" data-availability-company-empty hidden>
+      <h3>Select a company</h3>
+      <p>Join a company or choose one from the company switcher to manage your availability.</p>
+      <a class="button button-secondary" href="/companies">Your companies</a>
+    </div>
+
+    <div class="availability-week-grid" data-availability-week-grid aria-label="Availability for this week">
+      {% for day in range(7) %}
+      <section class="availability-day" data-availability-day="{{ day }}" aria-labelledby="availability-day-title-{{ day }}">
+        <h3 id="availability-day-title-{{ day }}" data-availability-day-label>Day</h3>
+        <ol class="availability-day-list" data-availability-day-list></ol>
+      </section>
+      {% endfor %}
+      <div class="availability-empty" data-availability-empty hidden>
+        <h3>No availability this week</h3>
+        <p>Add a date-specific interval below. Your availability will not repeat automatically.</p>
+      </div>
+      <div class="availability-empty" data-availability-load-error hidden>
+        <h3>Availability could not be loaded</h3>
+        <p>Check your connection and try again.</p>
+        <button class="button button-secondary" type="button" data-availability-retry>Try again</button>
+      </div>
+    </div>
+    <button class="button button-secondary availability-load-more" type="button" data-availability-load-more hidden>Load more intervals</button>
+
+    <section class="surface-card availability-editor" aria-labelledby="availability-form-title">
+      <div class="availability-editor-heading">
+        <div>
+          <p class="eyebrow">DATE-SPECIFIC</p>
+          <h2 id="availability-form-title" data-availability-form-title>Add availability</h2>
+        </div>
+      </div>
+      <form class="availability-form" method="post" action="/availability" data-availability-form="create">
+        <div class="availability-fields">
+          <div class="form-field">
+            <label for="availability-start-at">Start date and time</label>
+            <input id="availability-start-at" name="start_at" type="datetime-local" step="60" required aria-describedby="availability-time-hint">
+          </div>
+          <div class="form-field">
+            <label for="availability-end-at">End date and time</label>
+            <input id="availability-end-at" name="end_at" type="datetime-local" step="60" required aria-describedby="availability-time-hint">
+          </div>
+        </div>
+        <p class="form-hint" id="availability-time-hint">Times use <span data-local-time-zone>your local time zone</span>. To enter an overnight interval, choose the following date for the end time.</p>
+        <p class="form-feedback" data-availability-form-message role="status" aria-live="polite" hidden></p>
+        <div class="availability-form-actions">
+          <button class="button button-primary" type="submit" data-availability-submit>Save availability</button>
+          <button class="button button-secondary" type="button" data-availability-cancel hidden>Cancel edit</button>
+        </div>
+      </form>
+    </section>
+  </section>
+  {% else %}
+  <section class="surface-card availability-sign-in" aria-labelledby="availability-sign-in-title">
+    <h2 id="availability-sign-in-title">Sign in to manage availability</h2>
+    <p>Your availability is private to you and the administrators of each company you belong to.</p>
+    <a class="button button-primary" href="/login">Sign in</a>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

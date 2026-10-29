@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule{% endblock %}
+{% block breadcrumb %}Schedule{% endblock %}
+{% block content %}
+<section class="page-content schedule-page" aria-labelledby="page-title">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">TEAM PLANNING</p>
+      <h1 id="page-title">Schedule</h1>
+      <p class="page-description">A clear view of the work ahead.</p>
+    </div>
+  </div>
+
+  {% if authenticated %}
+  <section class="schedule-workspace" aria-labelledby="schedule-week-title">
+    <div class="schedule-week-toolbar">
+      <div>
+        <p class="eyebrow">WEEK VIEW</p>
+        <h2 id="schedule-week-title" data-schedule-week-label aria-live="polite">Loading week…</h2>
+        <p class="schedule-time-zone">Times shown in <strong data-schedule-time-zone>your local time zone</strong>. Shifts may cross midnight.</p>
+      </div>
+      <div class="schedule-week-actions" aria-label="Schedule week controls">
+        <button class="button button-secondary button-compact" type="button" data-schedule-previous aria-label="Previous week">Previous</button>
+        <button class="button button-secondary button-compact" type="button" data-schedule-today>Today</button>
+        <button class="button button-secondary button-compact" type="button" data-schedule-next aria-label="Next week">Next</button>
+      </div>
+    </div>
+
+    <p class="schedule-feedback" data-schedule-status role="status" aria-live="polite">Choose a company to load its schedule.</p>
+    <div class="schedule-empty" data-schedule-access hidden>
+      <h3>Schedule unavailable</h3>
+      <p>Choose a company membership to view its schedule.</p>
+    </div>
+    <div class="schedule-empty" data-schedule-company-empty hidden>
+      <h3>Select a company</h3>
+      <p>Join a company or choose one from the company switcher to view its schedule.</p>
+      <a class="button button-secondary" href="/companies">Your companies</a>
+    </div>
+    <div class="schedule-empty" data-schedule-load-error hidden>
+      <h3>Schedule could not be loaded</h3>
+      <p>Check your connection and try again.</p>
+      <button class="button button-secondary" type="button" data-schedule-retry>Try again</button>
+    </div>
+
+    <div class="schedule-week-grid" data-schedule-week-grid aria-label="Schedule for this week">
+      {% for day in range(7) %}
+      <section class="schedule-day" data-schedule-day="{{ day }}" aria-labelledby="schedule-day-title-{{ day }}">
+        <h3 id="schedule-day-title-{{ day }}" data-schedule-day-label>Day</h3>
+        <ol class="schedule-day-list" data-schedule-day-list></ol>
+      </section>
+      {% endfor %}
+      <div class="schedule-empty" data-schedule-empty hidden>
+        <h3>No shifts this week</h3>
+        <p>New shifts will appear here after they are created.</p>
+      </div>
+    </div>
+    <button class="button button-secondary schedule-load-more" type="button" data-schedule-load-more hidden>Load more shifts</button>
+
+    <section class="surface-card schedule-editor" data-schedule-admin-tools hidden aria-labelledby="schedule-form-title">
+      <div>
+        <p class="eyebrow">ADMINISTRATOR</p>
+        <h2 id="schedule-form-title">Create a shift</h2>
+        <p class="schedule-hint">Choose local start and end times. For a repeated time during a daylight-saving change, select which occurrence you mean.</p>
+      </div>
+      <form class="schedule-form" method="post" action="/schedule" data-schedule-form="create-shift" data-schedule-create-form>
+        <div class="schedule-fields">
+          <div class="form-field">
+            <label for="schedule-start-at">Start date and time</label>
+            <input id="schedule-start-at" name="start_at" type="datetime-local" step="60" required aria-describedby="schedule-time-hint">
+          </div>
+          <div class="form-field">
+            <label for="schedule-end-at">End date and time</label>
+            <input id="schedule-end-at" name="end_at" type="datetime-local" step="60" required aria-describedby="schedule-time-hint">
+          </div>
+          <div class="form-field schedule-disambiguation" data-schedule-start-occurrence-wrap hidden>
+            <label for="schedule-start-occurrence">Repeated start time</label>
+            <select id="schedule-start-occurrence" data-schedule-start-occurrence>
+              <option value="0">Earlier occurrence</option>
+              <option value="1">Later occurrence</option>
+            </select>
+          </div>
+          <div class="form-field schedule-disambiguation" data-schedule-end-occurrence-wrap hidden>
+            <label for="schedule-end-occurrence">Repeated end time</label>
+            <select id="schedule-end-occurrence" data-schedule-end-occurrence>
+              <option value="0">Earlier occurrence</option>
+              <option value="1">Later occurrence</option>
+            </select>
+          </div>
+        </div>
+        <p class="form-hint" id="schedule-time-hint">Times use <span data-schedule-time-zone>your local time zone</span>. The selected UTC offset is sent with each time.</p>
+        <p class="form-feedback" data-schedule-form-message role="status" aria-live="polite" hidden></p>
+        <button class="button button-primary" type="submit">Create shift</button>
+      </form>
+      <div class="schedule-roster">
+        <h3>Eligible employees</h3>
+        <p class="form-hint">Only linked employee memberships from this company can be assigned.</p>
+        <p class="schedule-roster-message" data-schedule-roster-message role="status" aria-live="polite"></p>
+        <button class="button button-secondary button-compact" type="button" data-schedule-roster-load-more hidden>Load more employees</button>
+      </div>
+    </section>
+  </section>
+  {% else %}
+  <section class="surface-card schedule-sign-in" aria-labelledby="schedule-sign-in-title">
+    <h2 id="schedule-sign-in-title">Sign in to view your schedule</h2>
+    <p>Your schedule is available only to members authorized for the selected company.</p>
+    <a class="button button-primary" href="/login">Sign in</a>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

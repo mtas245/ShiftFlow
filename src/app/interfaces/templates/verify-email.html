@@ -1,0 +1,29 @@
+{% extends "auth-page.html" %}
+
+{% block title %}Verify your email{% endblock %}
+{% block breadcrumb %}Verify email{% endblock %}
+{% block auth_title %}Verify your email{% endblock %}
+{% block auth_description %}Enter the one-time code from your email. The code is valid for 24 hours and should only be entered on this page.{% endblock %}
+{% block auth_content %}
+<form class="auth-form" method="post" action="/auth/email-verification/confirm" data-auth-form="verify-email">
+  <div class="form-field">
+    <label for="verification-token">Verification code</label>
+    <input id="verification-token" name="token" type="text" autocomplete="one-time-code" inputmode="text" autocapitalize="off" spellcheck="false" minlength="43" maxlength="43" aria-describedby="verification-code-hint" required>
+    <p class="form-hint" id="verification-code-hint">Paste the complete one-time code. It is never placed in the page URL.</p>
+  </div>
+  <div class="form-feedback" data-form-message role="status" aria-live="polite" hidden></div>
+  <button class="button button-primary auth-submit" type="submit">Verify email</button>
+</form>
+<details class="resend-details">
+  <summary>Need another verification code?</summary>
+  <form class="auth-form" method="post" action="/auth/email-verification/request" data-auth-form="resend-verification">
+    <div class="form-field">
+      <label for="resend-email">Email address</label>
+      <input id="resend-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+    </div>
+    <div class="form-feedback" data-form-message role="status" aria-live="polite" hidden></div>
+    <button class="button button-secondary auth-submit" type="submit">Send code</button>
+  </form>
+</details>
+<p class="auth-switch"><a href="/login">Return to sign in</a></p>
+{% endblock %}
