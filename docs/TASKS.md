@@ -1132,7 +1132,20 @@ baseline before parallel code changes.
   and broader accessibility/release validation are still required. Keep
   **PHASE 3 / in-progress**.
 
-## Working agreement
+### Local demo seed (uncommitted)
+
+- RED: `tests/unit/test_demo_seed_guard.py` and
+  `tests/integration/test_postgres_demo_seed.py` failed at collection
+  (`ModuleNotFoundError: app.interfaces.demo_seed`).
+- GREEN: `src/app/interfaces/demo_seed.py` plus the opt-in `demo-seed` Compose
+  profile; 26 new tests pass (one test-window mistake in the new test was
+  corrected). Full PostgreSQL-backed suite: **376 passed, 1 deselected
+  (E2E)**; was 350.
+- Verified via Compose against the dev database: refusal without opt-in
+  (exit 2), seeding (2 users, 1 company, 14 availabilities, 12 shifts,
+  8 assignments), idempotent rerun, and real HTTPS login for both accounts.
+- Credentials: `.local/demo/demo-credentials.json` (git-ignored). Usage in
+  README.md. Remaining: not committed; Playwright E2E not rerun (unaffected).
 
 - Keep one active vertical slice small enough to review and demonstrate.
 - Agree shared contracts before parallel work; avoid concurrent edits to the
