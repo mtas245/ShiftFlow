@@ -5,7 +5,7 @@ hospitality **employee availability and shift scheduling**. Employees state
 when they can work; administrators create shifts and assign only employees who
 are available. Each company's data is isolated from every other company.
 
-**Status:** Phase 3 (Develop), in progress. ShiftFlow is a local, reviewed MVP;
+**Status:** Phase 3 (Develop), in progress. ShiftFlow is a locally tested MVP;
 it is not deployed and not approved for production use (see
 [Limitations](#limitations)).
 
@@ -55,11 +55,6 @@ run from the repository root. This setup uses a local PostgreSQL 16 database,
 development-only credentials, and a self-signed HTTPS certificate for
 `localhost`. The certificate is untrusted by browsers and is for local
 development only.
-
-Requirements: Docker Desktop with Docker Compose. This setup uses a local
-PostgreSQL 16 database, development-only credentials, and a self-signed HTTPS
-certificate for `localhost`. The certificate is untrusted by browsers and is
-for local development only.
 
 ```powershell
 Copy-Item .env.example .env
@@ -201,8 +196,8 @@ disposable PostgreSQL service with synthetic-only credentials.
   seed was run via Compose and both demo accounts signed in over HTTPS.
 - **Hosted CI:** GitHub Actions
   [run 40900107660](https://github.com/mtas245/ShiftFlow/actions/runs/40900107660)
-  passed all four jobs for the earlier committed code. The demo-seed code and
-  this README update are uncommitted and have **not** been through hosted CI.
+  passed all four jobs for the original MVP before the demo-seed extension.
+  The demo-seed changes still require their own hosted CI verification.
   Hosted test counts are not claimed.
 
 ## Limitations
