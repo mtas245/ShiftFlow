@@ -40,7 +40,7 @@ availability and agreeing shared interfaces. Dependencies refer to backlog IDs.
 | **P0 — S1: Specify MVP use cases** | Done (UC-001–UC-004 specified) | Unassigned | Depends on B0. Add specs for employee joining, availability submission, and shift creation/assignment. Clarify actors, authorization, validation, failure cases, and testable acceptance. | Each new use case has Given/When/Then acceptance and unit/integration/E2E expectations; membership and tenant authorization are explicit; scheduling boundaries and time-zone assumptions are stated; specs are reviewed before implementation. |
 | **P0 — D1: Resolve implementation decisions** | In progress (ADR-004 and ADR-005 approved; ADR-006 remains proposed) | Unassigned | Depends on S1. Prepare and obtain human approval for the ADRs listed under “Design decisions required before implementation”. | Approved ADRs describe the FastAPI-served browser UI, authentication/deployment boundary, and MVP deployment/runtime approach; scheduling semantics not already fixed by specs are decided. No implementation starts against unresolved shared contracts. |
 | **P1 — I1: Make the app locally runnable and deployment-ready early** | Done (non-root Docker image, isolated PostgreSQL 16 Compose runtime, explicit Alembic initialization, fail-closed configuration, and HTTPS readiness verified locally) | Unassigned | Depends on B0 and D1. Add Docker-based local execution, PostgreSQL configuration, documented environment variables, and safe startup configuration. | A clean checkout can start the application and PostgreSQL with the documented Docker command; migrations create the schema from scratch; health check works; secrets are not committed; public/production configuration rejects development-only impersonation and fails closed. |
-| **P1 — C1: Enforce application checks in CI** | In progress (Python/PostgreSQL, separate Playwright, and Docker migration/readiness smoke jobs configured; GitHub-hosted run remains pending) | Unassigned | Depends on B0; coordinate with I1 for PostgreSQL integration execution. | GitHub Actions on PRs runs formatting/static checks selected by the team, unit tests, integration tests against a dedicated disposable database, and a build/startup check; a failing check blocks successful validation; no production credentials are required. |
+| **P1 — C1: Enforce application checks in CI** | In progress (initial hosted run #5 passed structure and container-smoke; tests and E2E were blocked before execution by unavailable Python 3.12.10 on Ubuntu 26.04; those jobs now pin Ubuntu 24.04) | Unassigned | Depends on B0; coordinate with I1 for PostgreSQL integration execution. | GitHub Actions on PRs runs formatting/static checks selected by the team, unit tests, integration tests against a dedicated disposable database, and a build/startup check; a failing check blocks successful validation; no production credentials are required. |
 | **P1 — U1: Complete registration and employee joining** | In progress (UC-001/UC-002, account foundation, login, durable sessions, email verification, password recovery, Postmark delivery, and PostgreSQL shared rate limiting implemented; public release checks remain) | Unassigned | Depends on S1, D1, I1, and C1. Build small vertical slices using existing UC-001 foundations and ADR-003/ADR-005. | Registration persists company and administrator membership atomically. Joining codes use cryptographically secure randomness, are unique in PostgreSQL, and follow approved retry/error behavior. Joining validates the code and prevents duplicate membership. Account foundation stores Argon2id hashes and uniquely normalized email without altering existing membership identities. Public authentication remains restricted until the complete ADR-005 requirements are implemented and tested. |
 | **P1 — U2: Implement availability and shift assignment** | Done (domain/application/PostgreSQL persistence, FastAPI HTTP boundary, and browser workflows verified) | Unassigned | Depends on S1 and approved UC-003/UC-004 design; coordinate shared persistence contracts with U1. | UC-003 and UC-004 have SQLAlchemy persistence, tenant/role-scoped reads, transaction rollback, and shared PostgreSQL employee advisory locking. HTTP interfaces preserve those rules. Browser availability and shift workflows are covered by real-app E2E. |
 | **P1 — A1: Implement browser-supporting API contracts** | Done (session bootstrap, account-linked company discovery, administrator roster, membership-UUID assignment, and bounded schedule/availability reads implemented; browser pages are tracked separately under U3) | Unassigned | Depends on U1, U2, ADR-004, and an approved legacy-identity preflight plan. Keep changes in the existing FastAPI application and Clean Architecture boundaries. | Add safe session/CSRF bootstrap; principal-scoped membership discovery; administrator roster and tenant-scoped membership UUID assignment references; required company-specific display names for UC-001/UC-002; bounded schedule/availability reads; additive persistence migration; legacy mapping safeguard; unit, HTTP, isolated PostgreSQL and full-regression coverage. Do not add browser pages in this item. |
@@ -1095,8 +1095,18 @@ baseline before parallel code changes.
   credentials. The E2E job installs Chromium and runs the existing real-app
   Playwright journey. A separate Docker smoke job builds the image, starts
   Compose services, applies migrations explicitly, and checks HTTPS readiness.
-  CI YAML parsed locally; the GitHub-hosted workflow has not yet run because
-  no commit or push was authorized.
+  CI YAML parsed locally. Hosted run
+  [40894889383](https://github.com/mtas245/ShiftFlow/actions/runs/40894889383)
+  on 2026-10-29 passed `structure` and `container-smoke`; `tests` and `e2e`
+  failed in `actions/setup-python@v5` before dependency installation because
+  Python 3.12.10 x64 was unavailable for Ubuntu 26.04. The setup-python
+  version manifest was checked and includes a Python 3.12.10 Linux x64 build
+  for Ubuntu 24.04. The `tests` and `e2e` jobs now pin to `ubuntu-24.04`;
+  Python version, locks, PostgreSQL service isolation, Playwright setup, and
+  test commands are unchanged. The rerun against Ubuntu 24.04 is pending and
+  hosted application-test results are not yet verified. Compatibility evidence:
+  the [official setup-python version manifest](https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
+  lists `python-3.12.10-linux-24.04-x64.tar.gz`.
 - **Full regression / REFACTOR:** On Python 3.12.10, ran
   `.\.venv\Scripts\python.exe -m pytest -m "not e2e" tests\unit
   tests\integration -q` against a fresh loopback-only disposable PostgreSQL 16
@@ -1113,8 +1123,8 @@ baseline before parallel code changes.
   readiness all passed. Both disposable test containers and the isolated
   Compose project were removed after verification; pre-existing unrelated
   Docker resources were preserved.
-- **Remaining:** The GitHub Actions jobs await a hosted run and branch-protection
-  configuration. ADR-006 remains proposed; no public deployment, production
+- **Remaining:** Verify the hosted CI rerun and configure branch-protection
+  requirements manually. ADR-006 remains proposed; no public deployment, production
   secrets, or cloud activation is approved. Human review of accumulated work
   and broader accessibility/release validation are still required. Keep
   **PHASE 3 / in-progress**.
