@@ -74,5 +74,29 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Opt-in, local-only demo seeding. Never started by `docker compose up`.
+  # Requires SHIFTFLOW_DEMO_SEED=local-development on the command line; see README.md.
+  demo-seed:
+    profiles: ["demo"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Copy .env.example to .env first}
+      PYTHONPATH: /app/src
+      SHIFTFLOW_DEMO_SEED: ${SHIFTFLOW_DEMO_SEED:-}
+    command:
+      - python
+      - -m
+      - app.interfaces.demo_seed
+      - --confirm-local-demo
+    volumes:
+      - ./.local/demo:/demo
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   shiftflow_dev_postgres:
