@@ -8,9 +8,13 @@ from app.domain.company_membership import CompanyMembership, CompanyRole
 class CompanyRepository(Protocol):
     def add(self, company: Company) -> None: ...
 
+    def find_by_joining_code(self, joining_code: str) -> Company | None: ...
+
 
 class CompanyMembershipRepository(Protocol):
     def add(self, membership: CompanyMembership) -> None: ...
+
+    def get(self, company_id: str, user_id: str) -> CompanyMembership | None: ...
 
 
 class UnitOfWork(Protocol):
@@ -50,6 +54,7 @@ class RegisterCompanyCommand:
     business_phone: str
     business_address: str
     industry: str
+    display_name: str
 
 
 class RegisterCompany:
@@ -79,6 +84,8 @@ class RegisterCompany:
                 company_id=company.id,
                 user_id=authenticated_user.user_id,
                 role=CompanyRole.ADMINISTRATOR,
+                account_user_id=authenticated_user.user_id,
+                display_name=command.display_name,
             )
 
             try:

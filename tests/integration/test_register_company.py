@@ -85,6 +85,7 @@ def valid_command(**overrides):
         "business_phone": "+41791234567",
         "business_address": "1 Main Street",
         "industry": "  Food   and\tHospitality  ",
+        "display_name": "  Owner One  ",
     }
     values.update(overrides)
     return RegisterCompanyCommand(**values)
@@ -114,6 +115,9 @@ def test_registration_persists_company_and_creator_membership_atomically():
     assert membership.company_id == company.id
     assert membership.user_id == "user-1"
     assert membership.role.value == "administrator"
+    assert membership.account_user_id == "user-1"
+    assert membership.display_name == "Owner One"
+    assert membership.public_id
 
 
 def test_registration_retries_globally_duplicate_joining_code():

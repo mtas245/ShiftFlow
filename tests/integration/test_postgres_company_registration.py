@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 from sqlalchemy import create_engine, func, insert, select, text
@@ -13,10 +14,12 @@ from app.application.register_company import (
 )
 from app.domain.company import Company
 from app.domain.company_membership import CompanyMembership, CompanyRole
+from app.infrastructure.composition import build_register_company
 from app.infrastructure.persistence.models import (
     Base,
     CompanyMembershipRecord,
     CompanyRecord,
+    UserRecord,
 )
 from app.infrastructure.persistence.unit_of_work import SqlAlchemyUnitOfWorkFactory
 
@@ -83,6 +86,7 @@ def valid_command(**overrides):
         "business_phone": "+41791234567",
         "business_address": "1 Main Street",
         "industry": "  Food   and\tHospitality  ",
+        "display_name": "Company Owner",
     }
     values.update(overrides)
     return RegisterCompanyCommand(**values)
@@ -92,6 +96,22 @@ def _register(engine, codes):
     return RegisterCompany(
         SqlAlchemyUnitOfWorkFactory(engine), SequenceCodeGenerator(codes)
     )
+
+
+def _ensure_account(engine, user_id):
+    with engine.begin() as connection:
+        if connection.scalar(
+            select(UserRecord.id).where(UserRecord.id == user_id)
+        ) is None:
+            email_local_part = re.sub(r"[^a-z0-9]+", "-", user_id.lower()).strip("-")
+            connection.execute(
+                UserRecord.__table__.insert().values(
+                    id=user_id,
+                    email=f"{email_local_part or 'test-user'}@example.test",
+                    password_hash="not-used-by-registration-tests",
+                    email_verified_at=None,
+                )
+            )
 
 
 def test_postgres_tests_do_not_fall_back_to_database_url(monkeypatch):
@@ -122,6 +142,7 @@ def test_postgres_tests_reject_nonisolated_database_urls(monkeypatch, url):
 
 
 def test_company_and_administrator_membership_are_committed_together(postgres_engine):
+    _ensure_account(postgres_engine, "user-1")
     company = _register(postgres_engine, ["AB12CD34"]).execute(
         AuthenticatedUser(user_id="user-1"), valid_command()
     )
@@ -133,14 +154,21 @@ def test_company_and_administrator_membership_are_committed_together(postgres_en
             )
         )
         membership = connection.execute(
-            select(CompanyMembershipRecord.user_id, CompanyMembershipRecord.role).where(
-                CompanyMembershipRecord.company_id == company.id
-            )
+            select(
+                CompanyMembershipRecord.user_id,
+                CompanyMembershipRecord.role,
+                CompanyMembershipRecord.account_user_id,
+                CompanyMembershipRecord.display_name,
+                CompanyMembershipRecord.public_id,
+            ).where(CompanyMembershipRecord.company_id == company.id)
         ).one()
 
     assert stored_code == "AB12CD34"
     assert membership.user_id == "user-1"
     assert membership.role == "administrator"
+    assert membership.account_user_id == "user-1"
+    assert membership.display_name == "Company Owner"
+    assert membership.public_id
 
 
 def test_membership_failure_rolls_back_company(postgres_engine):
@@ -175,6 +203,7 @@ def test_membership_failure_rolls_back_company(postgres_engine):
 
 
 def test_database_enforces_joining_code_uniqueness_across_companies(postgres_engine):
+    _ensure_account(postgres_engine, "user-1")
     _register(postgres_engine, ["AB12CD34"]).execute(
         AuthenticatedUser("user-1"), valid_command()
     )
@@ -196,6 +225,8 @@ def test_database_enforces_joining_code_uniqueness_across_companies(postgres_eng
 
 def test_duplicate_joining_code_is_retried_and_registration_succeeds(postgres_engine):
     factory = SqlAlchemyUnitOfWorkFactory(postgres_engine)
+    _ensure_account(postgres_engine, "existing-user")
+    _ensure_account(postgres_engine, "new-user")
     _register(postgres_engine, ["AB12CD34"]).execute(
         AuthenticatedUser("existing-user"), valid_command()
     )
@@ -212,6 +243,8 @@ def test_duplicate_joining_code_is_retried_and_registration_succeeds(postgres_en
 
 
 def test_five_database_collisions_leave_no_partial_records(postgres_engine):
+    _ensure_account(postgres_engine, "existing-user")
+    _ensure_account(postgres_engine, "new-user")
     _register(postgres_engine, ["AB12CD34"]).execute(
         AuthenticatedUser("existing-user"), valid_command()
     )
@@ -231,4 +264,63 @@ def test_five_database_collisions_leave_no_partial_records(postgres_engine):
                 select(func.count()).select_from(CompanyMembershipRecord)
             )
             == 1
+        )
+
+
+def test_production_composition_registers_company_with_secure_joining_code(
+    postgres_engine,
+):
+    _ensure_account(postgres_engine, "production-user")
+    company = build_register_company(postgres_engine).execute(
+        AuthenticatedUser("production-user"), valid_command()
+    )
+
+    assert re.fullmatch(r"[A-Z0-9]{8}", company.joining_code)
+    with postgres_engine.connect() as connection:
+        stored_code = connection.scalar(
+            select(CompanyRecord.joining_code).where(
+                CompanyRecord.id == company.id
+            )
+        )
+        membership_count = connection.scalar(
+            select(func.count())
+            .select_from(CompanyMembershipRecord)
+            .where(CompanyMembershipRecord.company_id == company.id)
+        )
+    assert stored_code == company.joining_code
+    assert membership_count == 1
+
+
+def test_unexpected_database_constraint_failure_is_not_retried_as_code_collision(
+    postgres_engine,
+):
+    with postgres_engine.begin() as connection:
+        connection.execute(
+            text(
+                "ALTER TABLE companies ADD CONSTRAINT "
+                "ck_test_reject_company_name "
+                "CHECK (company_name <> 'Database rejects')"
+            )
+        )
+
+    generator = SequenceCodeGenerator(["AB12CD34"] * 5)
+    service = RegisterCompany(
+        SqlAlchemyUnitOfWorkFactory(postgres_engine), generator
+    )
+    _ensure_account(postgres_engine, "unexpected-error-user")
+
+    with pytest.raises(IntegrityError):
+        service.execute(
+            AuthenticatedUser("unexpected-error-user"),
+            valid_command(company_name="Database rejects"),
+        )
+
+    assert generator.attempts == 1
+    with postgres_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(CompanyRecord)) == 0
+        assert (
+            connection.scalar(
+                select(func.count()).select_from(CompanyMembershipRecord)
+            )
+            == 0
         )
